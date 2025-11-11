@@ -13,7 +13,7 @@ SW [3:1] should be choosing the state, which KEY[1] should execute.
 111 should do nothing
 
 */
-module logic(
+module logic_f(
     input [3:0] SW,
     input [1:0] KEY,
     output reg [2:0] f1 [0:8],  // front
@@ -587,6 +587,5 @@ always @(*) begin
 end
 
 endmodule
-
 
 
