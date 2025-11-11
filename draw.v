@@ -1,70 +1,100 @@
 module cube_drawer(
     input clk,
     input resetn,
-    input [2:0] colors[0:53],
+    input [2:0] f1 [0:8],   // front
+    input [2:0] f2 [0:8],   // back
+    input [2:0] f3 [0:8],   // left
+    input [2:0] f4 [0:8],   // right
+    input [2:0] f5 [0:8],   // top
+    input [2:0] f6 [0:8],   // bottom
     output reg [7:0] x,
     output reg [6:0] y,
     output reg [2:0] colour,
     output reg plot
 );
-    localparam STICKER_SIZE = 8;
-    localparam FACE_SIZE = 3 * STICKER_SIZE;
-
-    // pixel counter
-    reg [12:0] pixel_index; // 0..3455 (54*64-1)
-
-    wire [5:0] sticker_index = pixel_index / (STICKER_SIZE*STICKER_SIZE);
-    wire [5:0] pixel_in_sticker = pixel_index % (STICKER_SIZE*STICKER_SIZE);
-    wire [2:0] local_x = pixel_in_sticker % STICKER_SIZE;
-    wire [2:0] local_y = pixel_in_sticker / STICKER_SIZE;
-
-    // face offsets
-    reg [7:0] face_x;
-    reg [6:0] face_y;
-
+    reg [12:0] pixel_counter;
+    
+    wire [5:0] sticker_num;
+    wire [5:0] pixel_in_sticker;
+    wire [2:0] local_x, local_y;
+    
+    assign sticker_num = pixel_counter[12:6];
+    assign pixel_in_sticker = pixel_counter[5:0];
+    assign local_x = pixel_in_sticker[2:0];
+    assign local_y = pixel_in_sticker[5:3];
+    
+    wire [2:0] face_num;
+    wire [3:0] sticker_in_face;
+    
+    assign face_num = (sticker_num < 9) ? 3'd0 :
+                      (sticker_num < 18) ? 3'd1 :
+                      (sticker_num < 27) ? 3'd2 :
+                      (sticker_num < 36) ? 3'd3 :
+                      (sticker_num < 45) ? 3'd4 : 3'd5;
+    
+    assign sticker_in_face = sticker_num - (face_num * 9);
+    
+    wire [1:0] sticker_col = (sticker_in_face == 0 || sticker_in_face == 3 || sticker_in_face == 6) ? 2'd0 :
+                              (sticker_in_face == 1 || sticker_in_face == 4 || sticker_in_face == 7) ? 2'd1 : 2'd2;
+    
+    wire [1:0] sticker_row = (sticker_in_face < 3) ? 2'd0 :
+                              (sticker_in_face < 6) ? 2'd1 : 2'd2;
+    
+    reg [7:0] face_base_x;
+    reg [6:0] face_base_y;
+    
     always @(*) begin
-        case (sticker_index / 9)  // face number 0..5
-            0: begin face_x = FACE_SIZE; face_y = 0; end            // U
-            1: begin face_x = 0; face_y = FACE_SIZE; end            // L
-            2: begin face_x = FACE_SIZE; face_y = FACE_SIZE; end    // F
-            3: begin face_x = 2*FACE_SIZE; face_y = FACE_SIZE; end  // R
-            4: begin face_x = 3*FACE_SIZE; face_y = FACE_SIZE; end  // B
-            5: begin face_x = FACE_SIZE; face_y = 2*FACE_SIZE; end  // D
-            default: begin face_x = 0; face_y = 0; end
+        case (face_num)
+            3'd0: begin face_base_x = 24;  face_base_y = 0; end   // Top (U)
+            3'd1: begin face_base_x = 0;   face_base_y = 24; end  // Left (L)
+            3'd2: begin face_base_x = 24;  face_base_y = 24; end  // Front (F)
+            3'd3: begin face_base_x = 48;  face_base_y = 24; end  // Right (R)
+            3'd4: begin face_base_x = 72;  face_base_y = 24; end  // Back (B)
+            3'd5: begin face_base_x = 24;  face_base_y = 48; end  // Bottom (D)
+            default: begin face_base_x = 0; face_base_y = 0; end
         endcase
     end
-
-    // local sticker coordinates (0..2)
-    wire [1:0] sx = sticker_index % 3;           // column inside face
-    wire [1:0] sy = (sticker_index % 9) / 3;     // row inside face
-
+    
     always @(*) begin
-        x = face_x + sx * STICKER_SIZE + local_x;
-        y = face_y + sy * STICKER_SIZE + local_y;
-        colour = map_color(colors[sticker_index]);
-        plot = 1;
+        x = face_base_x + (sticker_col * 8) + local_x;
+        y = face_base_y + (sticker_row * 8) + local_y;
+        plot = (pixel_counter < 3456);
     end
-
-    // increment pixel_index
+    
+    reg [2:0] color_id;
+    always @(*) begin
+        case (face_num)
+            3'd0: color_id = f5[sticker_in_face]; // top
+            3'd1: color_id = f3[sticker_in_face]; // left
+            3'd2: color_id = f1[sticker_in_face]; // front
+            3'd3: color_id = f4[sticker_in_face]; // right
+            3'd4: color_id = f2[sticker_in_face]; // back
+            3'd5: color_id = f6[sticker_in_face]; // bottom
+            default: color_id = 3'b000;
+        endcase
+    end
+    
+    always @(*) begin
+        case (color_id)
+            3'b000: colour = 3'b111; // white
+            3'b001: colour = 3'b110; // yellow
+            3'b010: colour = 3'b001; // blue
+            3'b011: colour = 3'b010; // green
+            3'b100: colour = 3'b100; // red
+            3'b101: colour = 3'b101; // magenta (replacement for orange)
+            default: colour = 3'b000; // black
+        endcase
+    end
+    
     always @(posedge clk or negedge resetn) begin
         if (!resetn)
-            pixel_index <= 0;
-        else
-            pixel_index <= (pixel_index == 54*STICKER_SIZE*STICKER_SIZE - 1) ? 0 : pixel_index + 1;
+            pixel_counter <= 0;
+        else begin
+            if (pixel_counter < 3455)
+                pixel_counter <= pixel_counter + 1;
+            else
+                pixel_counter <= 0;
+        end
     end
-
-    // color mapping function
-    function [2:0] map_color;
-        input [2:0] id;
-        case (id)
-            0: map_color = 3'b100; // red
-            1: map_color = 3'b010; // green
-            2: map_color = 3'b001; // blue
-            3: map_color = 3'b110; // yellow
-            4: map_color = 3'b011; // cyan
-            5: map_color = 3'b111; // white
-            default: map_color = 3'b000; // black
-        endcase
-    endfunction
 
 endmodule
