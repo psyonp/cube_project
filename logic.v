@@ -115,70 +115,70 @@ module logic(
         case (move_sel)
             3'b000: begin // front
                 for (i = 0; i < 9; i = i + 1) begin
-                    front[i]  <= nf_front[i];
-                    back[i]   <= nf_back[i];
-                    left[i]   <= nf_left[i];
-                    right[i]  <= nf_right[i];
-                    top[i]    <= nf_top[i];
-                    bottom[i] <= nf_bottom[i];
+                    front[i]  <= front_out_front[i];
+                    back[i]   <= front_out_back[i];
+                    left[i]   <= front_out_left[i];
+                    right[i]  <= front_out_right[i];
+                    top[i]    <= front_out_top[i];
+                    bottom[i] <= front_out_bottom[i];
                 end
             end
-
+    
             3'b001: begin // back
                 for (i = 0; i < 9; i = i + 1) begin
-                    front[i]  <= nf_front[i];
-                    back[i]   <= nf_back[i];
-                    left[i]   <= nf_left[i];
-                    right[i]  <= nf_right[i];
-                    top[i]    <= nf_top[i];
-                    bottom[i] <= nf_bottom[i];
+                    front[i]  <= back_out_front[i];
+                    back[i]   <= back_out_back[i];
+                    left[i]   <= back_out_left[i];
+                    right[i]  <= back_out_right[i];
+                    top[i]    <= back_out_top[i];
+                    bottom[i] <= back_out_bottom[i];
                 end
             end
-
+    
             3'b010: begin // left
                 for (i = 0; i < 9; i = i + 1) begin
-                    front[i]  <= nf_front[i];
-                    back[i]   <= nf_back[i];
-                    left[i]   <= nf_left[i];
-                    right[i]  <= nf_right[i];
-                    top[i]    <= nf_top[i];
-                    bottom[i] <= nf_bottom[i];
+                    front[i]  <= left_out_front[i];
+                    back[i]   <= left_out_back[i];
+                    left[i]   <= left_out_left[i];
+                    right[i]  <= left_out_right[i];
+                    top[i]    <= left_out_top[i];
+                    bottom[i] <= left_out_bottom[i];
                 end
             end
-
+    
             3'b011: begin // right
                 for (i = 0; i < 9; i = i + 1) begin
-                    front[i]  <= nf_front[i];
-                    back[i]   <= nf_back[i];
-                    left[i]   <= nf_left[i];
-                    right[i]  <= nf_right[i];
-                    top[i]    <= nf_top[i];
-                    bottom[i] <= nf_bottom[i];
+                    front[i]  <= right_out_front[i];
+                    back[i]   <= right_out_back[i];
+                    left[i]   <= right_out_left[i];
+                    right[i]  <= right_out_right[i];
+                    top[i]    <= right_out_top[i];
+                    bottom[i] <= right_out_bottom[i];
                 end
             end
-
+    
             3'b100: begin // top
                 for (i = 0; i < 9; i = i + 1) begin
-                    front[i]  <= nf_front[i];
-                    back[i]   <= nf_back[i];
-                    left[i]   <= nf_left[i];
-                    right[i]  <= nf_right[i];
-                    top[i]    <= nf_top[i];
-                    bottom[i] <= nf_bottom[i];
+                    front[i]  <= top_out_front[i];
+                    back[i]   <= top_out_back[i];
+                    left[i]   <= top_out_left[i];
+                    right[i]  <= top_out_right[i];
+                    top[i]    <= top_out_top[i];
+                    bottom[i] <= top_out_bottom[i];
                 end
             end
-
+    
             3'b101: begin // bottom
                 for (i = 0; i < 9; i = i + 1) begin
-                    front[i]  <= nf_front[i];
-                    back[i]   <= nf_back[i];
-                    left[i]   <= nf_left[i];
-                    right[i]  <= nf_right[i];
-                    top[i]    <= nf_top[i];
-                    bottom[i] <= nf_bottom[i];
+                    front[i]  <= bottom_out_front[i];
+                    back[i]   <= bottom_out_back[i];
+                    left[i]   <= bottom_out_left[i];
+                    right[i]  <= bottom_out_right[i];
+                    top[i]    <= bottom_out_top[i];
+                    bottom[i] <= bottom_out_bottom[i];
                 end
             end
-
+    
             default: begin end // do nothing
         endcase
     end
@@ -585,4 +585,5 @@ always @(*) begin
 end
 
 endmodule
+
 
