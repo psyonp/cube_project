@@ -96,5 +96,4 @@ module cube_drawer(
                 pixel_counter <= 0;
         end
     end
-
 endmodule
