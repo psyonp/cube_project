@@ -98,91 +98,94 @@ module logic(
 
     integer i;
 
-    // Initial solved cube
-    always @(negedge KEY[0]) begin
-        for (i = 0; i < 9; i = i + 1) begin
-            front[i]  <= 3'b000; // white
-            back[i]   <= 3'b001; // yellow
-            left[i]   <= 3'b010; // blue
-            right[i]  <= 3'b011; // green
-            top[i]    <= 3'b100; // red
-            bottom[i] <= 3'b101; // orange
+    // Combined sequential logic for both reset and move operations
+    always @(negedge KEY[0] or negedge KEY[1]) begin
+        if (!KEY[0]) begin
+            // Reset to solved cube
+            for (i = 0; i < 9; i = i + 1) begin
+                front[i]  <= 3'b000; // white
+                back[i]   <= 3'b001; // yellow
+                left[i]   <= 3'b010; // blue
+                right[i]  <= 3'b011; // green
+                top[i]    <= 3'b100; // red
+                bottom[i] <= 3'b101; // orange
+            end
+        end
+        else if (!KEY[1]) begin
+            // Execute selected rotation
+            case (move_sel)
+                3'b000: begin // front
+                    for (i = 0; i < 9; i = i + 1) begin
+                        front[i]  <= front_out_front[i];
+                        back[i]   <= front_out_back[i];
+                        left[i]   <= front_out_left[i];
+                        right[i]  <= front_out_right[i];
+                        top[i]    <= front_out_top[i];
+                        bottom[i] <= front_out_bottom[i];
+                    end
+                end
+        
+                3'b001: begin // back
+                    for (i = 0; i < 9; i = i + 1) begin
+                        front[i]  <= back_out_front[i];
+                        back[i]   <= back_out_back[i];
+                        left[i]   <= back_out_left[i];
+                        right[i]  <= back_out_right[i];
+                        top[i]    <= back_out_top[i];
+                        bottom[i] <= back_out_bottom[i];
+                    end
+                end
+        
+                3'b010: begin // left
+                    for (i = 0; i < 9; i = i + 1) begin
+                        front[i]  <= left_out_front[i];
+                        back[i]   <= left_out_back[i];
+                        left[i]   <= left_out_left[i];
+                        right[i]  <= left_out_right[i];
+                        top[i]    <= left_out_top[i];
+                        bottom[i] <= left_out_bottom[i];
+                    end
+                end
+        
+                3'b011: begin // right
+                    for (i = 0; i < 9; i = i + 1) begin
+                        front[i]  <= right_out_front[i];
+                        back[i]   <= right_out_back[i];
+                        left[i]   <= right_out_left[i];
+                        right[i]  <= right_out_right[i];
+                        top[i]    <= right_out_top[i];
+                        bottom[i] <= right_out_bottom[i];
+                    end
+                end
+        
+                3'b100: begin // top
+                    for (i = 0; i < 9; i = i + 1) begin
+                        front[i]  <= top_out_front[i];
+                        back[i]   <= top_out_back[i];
+                        left[i]   <= top_out_left[i];
+                        right[i]  <= top_out_right[i];
+                        top[i]    <= top_out_top[i];
+                        bottom[i] <= top_out_bottom[i];
+                    end
+                end
+        
+                3'b101: begin // bottom
+                    for (i = 0; i < 9; i = i + 1) begin
+                        front[i]  <= bottom_out_front[i];
+                        back[i]   <= bottom_out_back[i];
+                        left[i]   <= bottom_out_left[i];
+                        right[i]  <= bottom_out_right[i];
+                        top[i]    <= bottom_out_top[i];
+                        bottom[i] <= bottom_out_bottom[i];
+                    end
+                end
+        
+                default: begin end // do nothing
+            endcase
         end
     end
 
-    // On KEY[1] press: execute selected rotation
-    always @(negedge KEY[1]) begin
-        case (move_sel)
-            3'b000: begin // front
-                for (i = 0; i < 9; i = i + 1) begin
-                    front[i]  <= front_out_front[i];
-                    back[i]   <= front_out_back[i];
-                    left[i]   <= front_out_left[i];
-                    right[i]  <= front_out_right[i];
-                    top[i]    <= front_out_top[i];
-                    bottom[i] <= front_out_bottom[i];
-                end
-            end
-    
-            3'b001: begin // back
-                for (i = 0; i < 9; i = i + 1) begin
-                    front[i]  <= back_out_front[i];
-                    back[i]   <= back_out_back[i];
-                    left[i]   <= back_out_left[i];
-                    right[i]  <= back_out_right[i];
-                    top[i]    <= back_out_top[i];
-                    bottom[i] <= back_out_bottom[i];
-                end
-            end
-    
-            3'b010: begin // left
-                for (i = 0; i < 9; i = i + 1) begin
-                    front[i]  <= left_out_front[i];
-                    back[i]   <= left_out_back[i];
-                    left[i]   <= left_out_left[i];
-                    right[i]  <= left_out_right[i];
-                    top[i]    <= left_out_top[i];
-                    bottom[i] <= left_out_bottom[i];
-                end
-            end
-    
-            3'b011: begin // right
-                for (i = 0; i < 9; i = i + 1) begin
-                    front[i]  <= right_out_front[i];
-                    back[i]   <= right_out_back[i];
-                    left[i]   <= right_out_left[i];
-                    right[i]  <= right_out_right[i];
-                    top[i]    <= right_out_top[i];
-                    bottom[i] <= right_out_bottom[i];
-                end
-            end
-    
-            3'b100: begin // top
-                for (i = 0; i < 9; i = i + 1) begin
-                    front[i]  <= top_out_front[i];
-                    back[i]   <= top_out_back[i];
-                    left[i]   <= top_out_left[i];
-                    right[i]  <= top_out_right[i];
-                    top[i]    <= top_out_top[i];
-                    bottom[i] <= top_out_bottom[i];
-                end
-            end
-    
-            3'b101: begin // bottom
-                for (i = 0; i < 9; i = i + 1) begin
-                    front[i]  <= bottom_out_front[i];
-                    back[i]   <= bottom_out_back[i];
-                    left[i]   <= bottom_out_left[i];
-                    right[i]  <= bottom_out_right[i];
-                    top[i]    <= bottom_out_top[i];
-                    bottom[i] <= bottom_out_bottom[i];
-                end
-            end
-    
-            default: begin end // do nothing
-        endcase
-    end
-
+    // Continuous assignment for outputs
     always @(*) begin
         for (i = 0; i < 9; i = i + 1) begin
             f1[i] = front[i];
@@ -195,7 +198,6 @@ module logic(
     end
 
 endmodule
-
 
 module front(
     input [2:0] ffront_in [0:8],
@@ -585,5 +587,6 @@ always @(*) begin
 end
 
 endmodule
+
 
 
