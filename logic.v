@@ -35,54 +35,65 @@ module logic(
     wire reverse = SW[0];
     wire [2:0] move_sel = SW[3:1];
 
-    wire [2:0] nf_front [0:8];
-    wire [2:0] nf_back  [0:8];
-    wire [2:0] nf_left  [0:8];
-    wire [2:0] nf_right [0:8];
-    wire [2:0] nf_top   [0:8];
-    wire [2:0] nf_bottom[0:8];
+    wire [2:0] front_out_front [0:8], front_out_back [0:8], front_out_left [0:8];
+    wire [2:0] front_out_right [0:8], front_out_top [0:8], front_out_bottom [0:8];
 
-    // Instantiate all face modules
+    wire [2:0] back_out_front [0:8], back_out_back [0:8], back_out_left [0:8];
+    wire [2:0] back_out_right [0:8], back_out_top [0:8], back_out_bottom [0:8];
+
+    wire [2:0] left_out_front [0:8], left_out_back [0:8], left_out_left [0:8];
+    wire [2:0] left_out_right [0:8], left_out_top [0:8], left_out_bottom [0:8];
+
+    wire [2:0] right_out_front [0:8], right_out_back [0:8], right_out_left [0:8];
+    wire [2:0] right_out_right [0:8], right_out_top [0:8], right_out_bottom [0:8];
+
+    wire [2:0] top_out_front [0:8], top_out_back [0:8], top_out_left [0:8];
+    wire [2:0] top_out_right [0:8], top_out_top [0:8], top_out_bottom [0:8];
+
+    wire [2:0] bottom_out_front [0:8], bottom_out_back [0:8], bottom_out_left [0:8];
+    wire [2:0] bottom_out_right [0:8], bottom_out_top [0:8], bottom_out_bottom [0:8];
+
+    // Instantiate all face modules with SEPARATE outputs
     front front_move(
         .ffront_in(front), .fback_in(back), .fleft_in(left), .fright_in(right),
         .ftop_in(top), .fbottom_in(bottom), .reverse(reverse),
-        .ffront_out(nf_front), .fback_out(nf_back), .fleft_out(nf_left),
-        .fright_out(nf_right), .ftop_out(nf_top), .fbottom_out(nf_bottom)
+        .ffront_out(front_out_front), .fback_out(front_out_back), .fleft_out(front_out_left),
+        .fright_out(front_out_right), .ftop_out(front_out_top), .fbottom_out(front_out_bottom)
     );
 
     back back_move(
         .ffront_in(front), .fback_in(back), .fleft_in(left), .fright_in(right),
         .ftop_in(top), .fbottom_in(bottom), .reverse(reverse),
-        .ffront_out(nf_front), .fback_out(nf_back), .fleft_out(nf_left),
-        .fright_out(nf_right), .ftop_out(nf_top), .fbottom_out(nf_bottom)
+        .ffront_out(back_out_front), .fback_out(back_out_back), .fleft_out(back_out_left),
+        .fright_out(back_out_right), .ftop_out(back_out_top), .fbottom_out(back_out_bottom)
     );
 
     left left_move(
         .ffront_in(front), .fback_in(back), .fleft_in(left), .fright_in(right),
         .ftop_in(top), .fbottom_in(bottom), .reverse(reverse),
-        .ffront_out(nf_front), .fback_out(nf_back), .fleft_out(nf_left),
-        .fright_out(nf_right), .ftop_out(nf_top), .fbottom_out(nf_bottom)
+        .ffront_out(left_out_front), .fback_out(left_out_back), .fleft_out(left_out_left),
+        .fright_out(left_out_right), .ftop_out(left_out_top), .fbottom_out(left_out_bottom)
     );
 
     right right_move(
         .ffront_in(front), .fback_in(back), .fleft_in(left), .fright_in(right),
         .ftop_in(top), .fbottom_in(bottom), .reverse(reverse),
-        .ffront_out(nf_front), .fback_out(nf_back), .fleft_out(nf_left),
-        .fright_out(nf_right), .ftop_out(nf_top), .fbottom_out(nf_bottom)
+        .ffront_out(right_out_front), .fback_out(right_out_back), .fleft_out(right_out_left),
+        .fright_out(right_out_right), .ftop_out(right_out_top), .fbottom_out(right_out_bottom)
     );
 
     top top_move(
         .ffront_in(front), .fback_in(back), .fleft_in(left), .fright_in(right),
         .ftop_in(top), .fbottom_in(bottom), .reverse(reverse),
-        .ffront_out(nf_front), .fback_out(nf_back), .fleft_out(nf_left),
-        .fright_out(nf_right), .ftop_out(nf_top), .fbottom_out(nf_bottom)
+        .ffront_out(top_out_front), .fback_out(top_out_back), .fleft_out(top_out_left),
+        .fright_out(top_out_right), .ftop_out(top_out_top), .fbottom_out(top_out_bottom)
     );
 
     bottom bottom_move(
         .ffront_in(front), .fback_in(back), .fleft_in(left), .fright_in(right),
         .ftop_in(top), .fbottom_in(bottom), .reverse(reverse),
-        .ffront_out(nf_front), .fback_out(nf_back), .fleft_out(nf_left),
-        .fright_out(nf_right), .ftop_out(nf_top), .fbottom_out(nf_bottom)
+        .ffront_out(bottom_out_front), .fback_out(bottom_out_back), .fleft_out(bottom_out_left),
+        .fright_out(bottom_out_right), .ftop_out(bottom_out_top), .fbottom_out(bottom_out_bottom)
     );
 
     integer i;
@@ -574,3 +585,4 @@ always @(*) begin
 end
 
 endmodule
+
