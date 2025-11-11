@@ -61,21 +61,24 @@ module top(
     );
     
     // 3. VGA adapter - sends pixel signals to screen
-    vga_adapter VGA(
-        .resetn(resetn),
-        .clock(CLOCK_50),
-        .colour(colour),
-        .x(x),
-        .y(y),
-        .plot(plot),
-        .VGA_R(VGA_R),
-        .VGA_G(VGA_G),
-        .VGA_B(VGA_B),
-        .VGA_HS(VGA_HS),
-        .VGA_VS(VGA_VS),
-        .VGA_BLANK_N(VGA_BLANK_N),
-        .VGA_SYNC_N(VGA_SYNC_N),
-        .VGA_CLK(VGA_CLK)
+    vga_adapter #(
+    .RESOLUTION("160x120"),
+    .COLOR_DEPTH(3)
+    ) VGA(
+    .resetn(resetn),
+    .clock(CLOCK_50),
+    .color(colour),        // Changed from "colour" to "color"
+    .x(x),
+    .y(y),
+    .write(plot),          // Changed from "plot" to "write"
+    .VGA_R(VGA_R),
+    .VGA_G(VGA_G),
+    .VGA_B(VGA_B),
+    .VGA_HS(VGA_HS),
+    .VGA_VS(VGA_VS),
+    .VGA_BLANK_N(VGA_BLANK_N),
+    .VGA_SYNC_N(VGA_SYNC_N),
+    .VGA_CLK(VGA_CLK)
     );
 
 endmodule
