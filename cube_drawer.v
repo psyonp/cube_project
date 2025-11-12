@@ -18,13 +18,15 @@ module cube_drawer(
     localparam IDLE = 3'b000;
     localparam CLEARING = 3'b001;
     localparam DRAWING_TITLE = 3'b010;
-    localparam DRAWING = 3'b011;
+    localparam DRAWING_CREDIT = 3'b011;
+    localparam DRAWING = 3'b100;
     
     reg [2:0] state;
     reg [14:0] pixel_counter;
     
     parameter SCREEN_CLEAR_END = 19200;
-    parameter TITLE_DRAW_END = 704;  // 11 chars * 8 width * 8 height
+    parameter TITLE_DRAW_END = 768;  // 12 chars * 8 width * 8 height
+    parameter CREDIT_DRAW_END = 704;  // 11 chars * 8 width * 8 height
     parameter CUBE_DRAW_END = 3456;
     
     wire [7:0] clear_x = pixel_counter % 160;
@@ -32,32 +34,37 @@ module cube_drawer(
     
     // Title drawing logic
     wire [9:0] title_pixel = pixel_counter;
-    wire [3:0] char_num = title_pixel / 64;  // Which character (0-10)
+    wire [3:0] char_num = title_pixel / 64;  // Which character (0-11)
     wire [5:0] pixel_in_char = title_pixel % 64;  // Which pixel in 8x8 char
     wire [2:0] char_x = pixel_in_char[2:0];
     wire [2:0] char_y = pixel_in_char[5:3];
     
     // Title: "Rubik's Cube"
-    // Center at top: 11 chars * 8 pixels = 88 pixels wide
-    // Start at (160-88)/2 = 36
-    parameter TITLE_X_START = 36;
+    // Center at top: 12 chars * 8 pixels = 96 pixels wide
+    // Start at (160-96)/2 = 32
+    parameter TITLE_X_START = 32;
     parameter TITLE_Y_START = 4;
     
     wire [7:0] title_x = TITLE_X_START + (char_num * 8) + char_x;
     wire [6:0] title_y = TITLE_Y_START + char_y;
     
+    // Credit: "By: PP, JW" (11 chars)
+    parameter CREDIT_X_START = 4;
+    parameter CREDIT_Y_START = 108;  // Near bottom (120 - 12 = 108)
+    
+    wire [7:0] credit_x = CREDIT_X_START + (char_num * 8) + char_x;
+    wire [6:0] credit_y = CREDIT_Y_START + char_y;
+    
     // Character bitmap function
     reg title_pixel_on;
     reg credit_pixel_on;
-	 
+    
+    // Title character bitmaps
     always @(*) begin
         title_pixel_on = 1'b0;
         if (char_x < 7 && char_y < 7) begin  // 7x7 font
             case (char_num)
-                4'd0: begin // Space
-                    title_pixel_on = 1'b0;
-                end
-					 4'd1: begin // R
+                4'd0: begin // R
                     case (char_y)
                         3'd0: title_pixel_on = (char_x < 6);
                         3'd1: title_pixel_on = (char_x == 0 || char_x == 6);
@@ -68,7 +75,7 @@ module cube_drawer(
                         3'd6: title_pixel_on = (char_x == 0 || char_x == 5 || char_x == 6);
                     endcase
                 end
-                4'd2: begin // u
+                4'd1: begin // u
                     case (char_y)
                         3'd0, 3'd1: title_pixel_on = 1'b0;
                         3'd2: title_pixel_on = (char_x == 0 || char_x == 6);
@@ -78,7 +85,7 @@ module cube_drawer(
                         3'd6: title_pixel_on = (char_x > 0);
                     endcase
                 end
-                4'd3: begin // b
+                4'd2: begin // b
                     case (char_y)
                         3'd0: title_pixel_on = (char_x == 0);
                         3'd1: title_pixel_on = (char_x == 0);
@@ -89,7 +96,7 @@ module cube_drawer(
                         3'd6: title_pixel_on = (char_x > 0 && char_x < 6);
                     endcase
                 end
-                4'd4: begin // i
+                4'd3: begin // i
                     case (char_y)
                         3'd0: title_pixel_on = (char_x == 3);
                         3'd1: title_pixel_on = 1'b0;
@@ -100,7 +107,7 @@ module cube_drawer(
                         3'd6: title_pixel_on = (char_x > 1 && char_x < 6);
                     endcase
                 end
-                4'd5: begin // k
+                4'd4: begin // k
                     case (char_y)
                         3'd0: title_pixel_on = (char_x == 0);
                         3'd1: title_pixel_on = (char_x == 0);
@@ -111,10 +118,28 @@ module cube_drawer(
                         3'd6: title_pixel_on = (char_x == 0 || char_x == 5 || char_x == 6);
                     endcase
                 end
-                4'd6: begin // Space
+                4'd5: begin // '
+                    case (char_y)
+                        3'd0: title_pixel_on = (char_x == 2 || char_x == 3);
+                        3'd1: title_pixel_on = (char_x == 2 || char_x == 3);
+                        3'd2: title_pixel_on = (char_x == 3);
+                        default: title_pixel_on = 1'b0;
+                    endcase
+                end
+                4'd6: begin // s
+                    case (char_y)
+                        3'd0, 3'd1: title_pixel_on = 1'b0;
+                        3'd2: title_pixel_on = (char_x > 0 && char_x < 6);
+                        3'd3: title_pixel_on = (char_x == 1);
+                        3'd4: title_pixel_on = (char_x > 1 && char_x < 6);
+                        3'd5: title_pixel_on = (char_x == 5);
+                        3'd6: title_pixel_on = (char_x > 1 && char_x < 6);
+                    endcase
+                end
+                4'd7: begin // Space
                     title_pixel_on = 1'b0;
-					 end
-                4'd7: begin // C
+                end
+                4'd8: begin // C
                     case (char_y)
                         3'd0: title_pixel_on = (char_x > 0 && char_x < 6);
                         3'd1: title_pixel_on = (char_x == 1 || char_x == 6);
@@ -125,7 +150,7 @@ module cube_drawer(
                         3'd6: title_pixel_on = (char_x > 0 && char_x < 6);
                     endcase
                 end
-                4'd8: begin // u
+                4'd9: begin // u
                     case (char_y)
                         3'd0, 3'd1: title_pixel_on = 1'b0;
                         3'd2: title_pixel_on = (char_x == 0 || char_x == 6);
@@ -135,7 +160,7 @@ module cube_drawer(
                         3'd6: title_pixel_on = (char_x > 0);
                     endcase
                 end
-                4'd9: begin // b
+                4'd10: begin // b (second 'b' in Cube)
                     case (char_y)
                         3'd0: title_pixel_on = (char_x == 0);
                         3'd1: title_pixel_on = (char_x == 0);
@@ -146,7 +171,7 @@ module cube_drawer(
                         3'd6: title_pixel_on = (char_x > 0 && char_x < 6);
                     endcase
                 end
-					 4'd10: begin // e
+                4'd11: begin // e (final letter)
                     case (char_y)
                         3'd0, 3'd1: title_pixel_on = 1'b0;
                         3'd2: title_pixel_on = (char_x > 0 && char_x < 6);
@@ -160,8 +185,9 @@ module cube_drawer(
             endcase
         end
     end
-	 
-	 always @(*) begin
+    
+    // Credit character bitmaps - "By: PP, JW"
+    always @(*) begin
         credit_pixel_on = 1'b0;
         if (char_x < 7 && char_y < 7) begin
             case (char_num)
@@ -435,6 +461,20 @@ module cube_drawer(
                     colour <= title_pixel_on ? 9'b111111111 : 9'b000000000;
                     
                     if (pixel_counter < TITLE_DRAW_END - 1) begin
+                        pixel_counter <= pixel_counter + 1;
+                    end else begin
+                        state <= DRAWING_CREDIT;
+                        pixel_counter <= 0;
+                    end
+                end
+                
+                DRAWING_CREDIT: begin
+                    plot <= 1'b1;
+                    x <= credit_x;
+                    y <= credit_y;
+                    colour <= credit_pixel_on ? 9'b111111111 : 9'b000000000;
+                    
+                    if (pixel_counter < CREDIT_DRAW_END - 1) begin
                         pixel_counter <= pixel_counter + 1;
                     end else begin
                         state <= DRAWING;
