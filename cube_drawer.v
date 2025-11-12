@@ -15,18 +15,250 @@ module cube_drawer(
 );
 
     // State machine states
-    localparam IDLE = 2'b00;
-    localparam CLEARING = 2'b01;
-    localparam DRAWING = 2'b10;
+    localparam IDLE = 3'b000;
+    localparam CLEARING = 3'b001;
+    localparam DRAWING_TITLE = 3'b010;
+    localparam DRAWING = 3'b011;
     
-    reg [1:0] state;
+    reg [2:0] state;
     reg [14:0] pixel_counter;
     
     parameter SCREEN_CLEAR_END = 19200;
+    parameter TITLE_DRAW_END = 704;  // 11 chars * 8 width * 8 height
     parameter CUBE_DRAW_END = 3456;
     
     wire [7:0] clear_x = pixel_counter % 160;
     wire [6:0] clear_y = pixel_counter / 160;
+    
+    // Title drawing logic
+    wire [9:0] title_pixel = pixel_counter;
+    wire [3:0] char_num = title_pixel / 64;  // Which character (0-10)
+    wire [5:0] pixel_in_char = title_pixel % 64;  // Which pixel in 8x8 char
+    wire [2:0] char_x = pixel_in_char[2:0];
+    wire [2:0] char_y = pixel_in_char[5:3];
+    
+    // Title: "Rubik's Cube"
+    // Center at top: 11 chars * 8 pixels = 88 pixels wide
+    // Start at (160-88)/2 = 36
+    parameter TITLE_X_START = 36;
+    parameter TITLE_Y_START = 4;
+    
+    wire [7:0] title_x = TITLE_X_START + (char_num * 8) + char_x;
+    wire [6:0] title_y = TITLE_Y_START + char_y;
+    
+    // Character bitmap function
+    reg title_pixel_on;
+    reg credit_pixel_on;
+	 
+    always @(*) begin
+        title_pixel_on = 1'b0;
+        if (char_x < 7 && char_y < 7) begin  // 7x7 font
+            case (char_num)
+                4'd0: begin // Space
+                    title_pixel_on = 1'b0;
+                end
+					 4'd1: begin // R
+                    case (char_y)
+                        3'd0: title_pixel_on = (char_x < 6);
+                        3'd1: title_pixel_on = (char_x == 0 || char_x == 6);
+                        3'd2: title_pixel_on = (char_x == 0 || char_x == 6);
+                        3'd3: title_pixel_on = (char_x < 6);
+                        3'd4: title_pixel_on = (char_x == 0 || char_x == 3);
+                        3'd5: title_pixel_on = (char_x == 0 || char_x == 4);
+                        3'd6: title_pixel_on = (char_x == 0 || char_x == 5 || char_x == 6);
+                    endcase
+                end
+                4'd2: begin // u
+                    case (char_y)
+                        3'd0, 3'd1: title_pixel_on = 1'b0;
+                        3'd2: title_pixel_on = (char_x == 0 || char_x == 6);
+                        3'd3: title_pixel_on = (char_x == 0 || char_x == 6);
+                        3'd4: title_pixel_on = (char_x == 0 || char_x == 6);
+                        3'd5: title_pixel_on = (char_x == 0 || char_x == 6);
+                        3'd6: title_pixel_on = (char_x > 0);
+                    endcase
+                end
+                4'd3: begin // b
+                    case (char_y)
+                        3'd0: title_pixel_on = (char_x == 0);
+                        3'd1: title_pixel_on = (char_x == 0);
+                        3'd2: title_pixel_on = (char_x < 6);
+                        3'd3: title_pixel_on = (char_x == 0 || char_x == 6);
+                        3'd4: title_pixel_on = (char_x == 0 || char_x == 6);
+                        3'd5: title_pixel_on = (char_x == 0 || char_x == 6);
+                        3'd6: title_pixel_on = (char_x > 0 && char_x < 6);
+                    endcase
+                end
+                4'd4: begin // i
+                    case (char_y)
+                        3'd0: title_pixel_on = (char_x == 3);
+                        3'd1: title_pixel_on = 1'b0;
+                        3'd2: title_pixel_on = (char_x == 2 || char_x == 3);
+                        3'd3: title_pixel_on = (char_x == 3);
+                        3'd4: title_pixel_on = (char_x == 3);
+                        3'd5: title_pixel_on = (char_x == 3);
+                        3'd6: title_pixel_on = (char_x > 1 && char_x < 6);
+                    endcase
+                end
+                4'd5: begin // k
+                    case (char_y)
+                        3'd0: title_pixel_on = (char_x == 0);
+                        3'd1: title_pixel_on = (char_x == 0);
+                        3'd2: title_pixel_on = (char_x == 0 || char_x == 5 || char_x == 6);
+                        3'd3: title_pixel_on = (char_x == 0 || char_x == 4);
+                        3'd4: title_pixel_on = (char_x == 0 || char_x == 3);
+                        3'd5: title_pixel_on = (char_x == 0 || char_x == 4);
+                        3'd6: title_pixel_on = (char_x == 0 || char_x == 5 || char_x == 6);
+                    endcase
+                end
+                4'd6: begin // Space
+                    title_pixel_on = 1'b0;
+					 end
+                4'd7: begin // C
+                    case (char_y)
+                        3'd0: title_pixel_on = (char_x > 0 && char_x < 6);
+                        3'd1: title_pixel_on = (char_x == 1 || char_x == 6);
+                        3'd2: title_pixel_on = (char_x == 1);
+                        3'd3: title_pixel_on = (char_x == 1);
+                        3'd4: title_pixel_on = (char_x == 1);
+                        3'd5: title_pixel_on = (char_x == 1 || char_x == 6);
+                        3'd6: title_pixel_on = (char_x > 0 && char_x < 6);
+                    endcase
+                end
+                4'd8: begin // u
+                    case (char_y)
+                        3'd0, 3'd1: title_pixel_on = 1'b0;
+                        3'd2: title_pixel_on = (char_x == 0 || char_x == 6);
+                        3'd3: title_pixel_on = (char_x == 0 || char_x == 6);
+                        3'd4: title_pixel_on = (char_x == 0 || char_x == 6);
+                        3'd5: title_pixel_on = (char_x == 0 || char_x == 6);
+                        3'd6: title_pixel_on = (char_x > 0);
+                    endcase
+                end
+                4'd9: begin // b
+                    case (char_y)
+                        3'd0: title_pixel_on = (char_x == 0);
+                        3'd1: title_pixel_on = (char_x == 0);
+                        3'd2: title_pixel_on = (char_x < 6);
+                        3'd3: title_pixel_on = (char_x == 0 || char_x == 6);
+                        3'd4: title_pixel_on = (char_x == 0 || char_x == 6);
+                        3'd5: title_pixel_on = (char_x == 0 || char_x == 6);
+                        3'd6: title_pixel_on = (char_x > 0 && char_x < 6);
+                    endcase
+                end
+					 4'd10: begin // e
+                    case (char_y)
+                        3'd0, 3'd1: title_pixel_on = 1'b0;
+                        3'd2: title_pixel_on = (char_x > 0 && char_x < 6);
+                        3'd3: title_pixel_on = (char_x == 1 || char_x == 6);
+                        3'd4: title_pixel_on = (char_x == 1 || (char_x > 1 && char_x < 6));
+                        3'd5: title_pixel_on = (char_x == 1);
+                        3'd6: title_pixel_on = (char_x > 0 && char_x < 6);
+                    endcase
+                end
+                default: title_pixel_on = 1'b0;
+            endcase
+        end
+    end
+	 
+	 always @(*) begin
+        credit_pixel_on = 1'b0;
+        if (char_x < 7 && char_y < 7) begin
+            case (char_num)
+                4'd0: begin // B
+                    case (char_y)
+                        3'd0: credit_pixel_on = (char_x < 6);
+                        3'd1: credit_pixel_on = (char_x == 0 || char_x == 6);
+                        3'd2: credit_pixel_on = (char_x == 0 || char_x == 6);
+                        3'd3: credit_pixel_on = (char_x < 6);
+                        3'd4: credit_pixel_on = (char_x == 0 || char_x == 6);
+                        3'd5: credit_pixel_on = (char_x == 0 || char_x == 6);
+                        3'd6: credit_pixel_on = (char_x < 6);
+                    endcase
+                end
+                4'd1: begin // y
+                    case (char_y)
+                        3'd0, 3'd1: credit_pixel_on = 1'b0;
+                        3'd2: credit_pixel_on = (char_x == 0 || char_x == 6);
+                        3'd3: credit_pixel_on = (char_x == 0 || char_x == 6);
+                        3'd4: credit_pixel_on = (char_x == 0 || char_x == 6);
+                        3'd5: credit_pixel_on = (char_x > 0);
+                        3'd6: credit_pixel_on = (char_x == 6);
+                    endcase
+                end
+                4'd2: begin // :
+                    case (char_y)
+                        3'd0, 3'd1, 3'd6: credit_pixel_on = 1'b0;
+                        3'd2: credit_pixel_on = (char_x == 3);
+                        3'd3: credit_pixel_on = 1'b0;
+                        3'd4: credit_pixel_on = (char_x == 3);
+                        3'd5: credit_pixel_on = 1'b0;
+                    endcase
+                end
+                4'd3: begin // Space
+                    credit_pixel_on = 1'b0;
+                end
+                4'd4: begin // P
+                    case (char_y)
+                        3'd0: credit_pixel_on = (char_x < 6);
+                        3'd1: credit_pixel_on = (char_x == 0 || char_x == 6);
+                        3'd2: credit_pixel_on = (char_x == 0 || char_x == 6);
+                        3'd3: credit_pixel_on = (char_x < 6);
+                        3'd4: credit_pixel_on = (char_x == 0);
+                        3'd5: credit_pixel_on = (char_x == 0);
+                        3'd6: credit_pixel_on = (char_x == 0);
+                    endcase
+                end
+                4'd5: begin // P
+                    case (char_y)
+                        3'd0: credit_pixel_on = (char_x < 6);
+                        3'd1: credit_pixel_on = (char_x == 0 || char_x == 6);
+                        3'd2: credit_pixel_on = (char_x == 0 || char_x == 6);
+                        3'd3: credit_pixel_on = (char_x < 6);
+                        3'd4: credit_pixel_on = (char_x == 0);
+                        3'd5: credit_pixel_on = (char_x == 0);
+                        3'd6: credit_pixel_on = (char_x == 0);
+                    endcase
+                end
+                4'd6: begin // ,
+                    case (char_y)
+                        3'd0, 3'd1, 3'd2, 3'd3, 3'd4: credit_pixel_on = 1'b0;
+                        3'd5: credit_pixel_on = (char_x == 3);
+                        3'd6: credit_pixel_on = (char_x == 2);
+                    endcase
+                end
+                4'd7: begin // Space
+                    credit_pixel_on = 1'b0;
+                end
+                4'd8: begin // J
+                    case (char_y)
+                        3'd0: credit_pixel_on = (char_x > 0);
+                        3'd1: credit_pixel_on = (char_x == 3);
+                        3'd2: credit_pixel_on = (char_x == 3);
+                        3'd3: credit_pixel_on = (char_x == 3);
+                        3'd4: credit_pixel_on = (char_x == 3);
+                        3'd5: credit_pixel_on = (char_x == 0 || char_x == 3);
+                        3'd6: credit_pixel_on = (char_x > 0 && char_x < 4);
+                    endcase
+                end
+                4'd9: begin // W
+                    case (char_y)
+                        3'd0: credit_pixel_on = (char_x == 0 || char_x == 6);
+                        3'd1: credit_pixel_on = (char_x == 0 || char_x == 6);
+                        3'd2: credit_pixel_on = (char_x == 0 || char_x == 6);
+                        3'd3: credit_pixel_on = (char_x == 0 || char_x == 6);
+                        3'd4: credit_pixel_on = (char_x == 0 || char_x == 3 || char_x == 6);
+                        3'd5: credit_pixel_on = (char_x == 0 || char_x == 3 || char_x == 6);
+                        3'd6: credit_pixel_on = (char_x == 1 || char_x == 5);
+                    endcase
+                end
+                4'd10: begin // Space
+                    credit_pixel_on = 1'b0;
+                end
+                default: credit_pixel_on = 1'b0;
+            endcase
+        end
+    end
     
     wire [12:0] cube_pixel = pixel_counter;
     wire [5:0] sticker_num;
@@ -189,6 +421,20 @@ module cube_drawer(
                     colour <= 9'b000000000;
                     
                     if (pixel_counter < SCREEN_CLEAR_END - 1) begin
+                        pixel_counter <= pixel_counter + 1;
+                    end else begin
+                        state <= DRAWING_TITLE;
+                        pixel_counter <= 0;
+                    end
+                end
+                
+                DRAWING_TITLE: begin
+                    plot <= 1'b1;
+                    x <= title_x;
+                    y <= title_y;
+                    colour <= title_pixel_on ? 9'b111111111 : 9'b000000000;
+                    
+                    if (pixel_counter < TITLE_DRAW_END - 1) begin
                         pixel_counter <= pixel_counter + 1;
                     end else begin
                         state <= DRAWING;
