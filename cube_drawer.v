@@ -59,16 +59,99 @@ module cube_drawer(
     reg [6:0] face_base_y;
     reg [2:0] color_id;
     
+    // Center the cube on 160x120 screen
+    // Cube is 96x72 pixels (4 faces wide x 3 faces tall, each 24 pixels)
+    // Center horizontally: (160 - 96) / 2 = 32
+    // Center vertically: (120 - 72) / 2 = 24
+    parameter H_OFFSET = 32;
+    parameter V_OFFSET = 24;
+    
     always @(*) begin
         case (face_num)
-            3'd0: begin face_base_x = 24;  face_base_y = 0; end
-            3'd1: begin face_base_x = 0;   face_base_y = 24; end
-            3'd2: begin face_base_x = 24;  face_base_y = 24; end
-            3'd3: begin face_base_x = 48;  face_base_y = 24; end
-            3'd4: begin face_base_x = 72;  face_base_y = 24; end
-            3'd5: begin face_base_x = 24;  face_base_y = 48; end
+            3'd0: begin face_base_x = H_OFFSET + 24;  face_base_y = V_OFFSET + 0; end   // Top (U)
+            3'd1: begin face_base_x = H_OFFSET + 0;   face_base_y = V_OFFSET + 24; end  // Left (L)
+            3'd2: begin face_base_x = H_OFFSET + 24;  face_base_y = V_OFFSET + 24; end  // Front (F)
+            3'd3: begin face_base_x = H_OFFSET + 48;  face_base_y = V_OFFSET + 24; end  // Right (R)
+            3'd4: begin face_base_x = H_OFFSET + 72;  face_base_y = V_OFFSET + 24; end  // Back (B)
+            3'd5: begin face_base_x = H_OFFSET + 24;  face_base_y = V_OFFSET + 48; end  // Bottom (D)
             default: begin face_base_x = 0; face_base_y = 0; end
         endcase
+    end
+    
+    // Letter pattern logic for center stickers (sticker_in_face == 4)
+    wire is_center_sticker = (sticker_in_face == 4);
+    wire [2:0] letter_x = local_x - 3'd2;  // Offset to center the 3-wide letter
+    wire [2:0] letter_y = local_y - 3'd2;  // Offset to center the 5-tall letter
+    
+    // Define letter patterns (3x5 pixel bitmaps)
+    reg letter_pixel;
+    always @(*) begin
+        letter_pixel = 1'b0;
+        if (is_center_sticker && letter_x < 3 && letter_y < 5) begin
+            case (face_num)
+                3'd0: begin // U (Top)
+                    case (letter_y)
+                        3'd0: letter_pixel = (letter_x == 0 || letter_x == 2);
+                        3'd1: letter_pixel = (letter_x == 0 || letter_x == 2);
+                        3'd2: letter_pixel = (letter_x == 0 || letter_x == 2);
+                        3'd3: letter_pixel = (letter_x == 0 || letter_x == 2);
+                        3'd4: letter_pixel = 1'b1;
+                        default: letter_pixel = 1'b0;
+                    endcase
+                end
+                3'd1: begin // L (Left)
+                    case (letter_y)
+                        3'd0: letter_pixel = (letter_x == 0);
+                        3'd1: letter_pixel = (letter_x == 0);
+                        3'd2: letter_pixel = (letter_x == 0);
+                        3'd3: letter_pixel = (letter_x == 0);
+                        3'd4: letter_pixel = 1'b1;
+                        default: letter_pixel = 1'b0;
+                    endcase
+                end
+                3'd2: begin // F (Front)
+                    case (letter_y)
+                        3'd0: letter_pixel = 1'b1;
+                        3'd1: letter_pixel = (letter_x == 0);
+                        3'd2: letter_pixel = 1'b1;
+                        3'd3: letter_pixel = (letter_x == 0);
+                        3'd4: letter_pixel = (letter_x == 0);
+                        default: letter_pixel = 1'b0;
+                    endcase
+                end
+                3'd3: begin // R (Right)
+                    case (letter_y)
+                        3'd0: letter_pixel = (letter_x != 2);
+                        3'd1: letter_pixel = (letter_x == 0 || letter_x == 2);
+                        3'd2: letter_pixel = (letter_x != 2);
+                        3'd3: letter_pixel = (letter_x == 0 || letter_x == 1);
+                        3'd4: letter_pixel = (letter_x == 0 || letter_x == 2);
+                        default: letter_pixel = 1'b0;
+                    endcase
+                end
+                3'd4: begin // B (Back)
+                    case (letter_y)
+                        3'd0: letter_pixel = (letter_x != 2);
+                        3'd1: letter_pixel = (letter_x == 0 || letter_x == 2);
+                        3'd2: letter_pixel = (letter_x != 2);
+                        3'd3: letter_pixel = (letter_x == 0 || letter_x == 2);
+                        3'd4: letter_pixel = (letter_x != 2);
+                        default: letter_pixel = 1'b0;
+                    endcase
+                end
+                3'd5: begin // D (Bottom)
+                    case (letter_y)
+                        3'd0: letter_pixel = (letter_x != 2);
+                        3'd1: letter_pixel = (letter_x == 0 || letter_x == 2);
+                        3'd2: letter_pixel = (letter_x == 0 || letter_x == 2);
+                        3'd3: letter_pixel = (letter_x == 0 || letter_x == 2);
+                        3'd4: letter_pixel = (letter_x != 2);
+                        default: letter_pixel = 1'b0;
+                    endcase
+                end
+                default: letter_pixel = 1'b0;
+            endcase
+        end
     end
     
     always @(*) begin
@@ -121,6 +204,8 @@ module cube_drawer(
                     // Check if pixel is on border (first or last pixel of 8x8 cell)
                     if (local_x == 0 || local_x == 7 || local_y == 0 || local_y == 7) begin
                         colour <= 9'b000000000; // Black border
+                    end else if (letter_pixel) begin
+                        colour <= 9'b000000000; // Black letter on center sticker
                     end else begin
                         case (color_id)
                             3'b000: colour <= 9'b111111111; // white
