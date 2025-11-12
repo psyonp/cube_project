@@ -118,21 +118,26 @@ module cube_drawer(
                     x <= face_base_x + (sticker_col * 8) + local_x;
                     y <= face_base_y + (sticker_row * 8) + local_y;
                     
-                    case (color_id)
-                        3'b000: colour <= 9'b111111111; // white
-                        3'b001: colour <= 9'b111111000; // yellow
-                        3'b010: colour <= 9'b000000111; // blue
-                        3'b011: colour <= 9'b000111000; // green
-                        3'b100: colour <= 9'b111000000; // red
-                        3'b101: colour <= 9'b111000111; // magenta
-                        default: colour <= 9'b000000000;
-                    endcase
-                    
-                    if (pixel_counter < CUBE_DRAW_END - 1) begin
-                        pixel_counter <= pixel_counter + 1;
+                    // Check if pixel is on border (first or last pixel of 8x8 cell)
+                    if (local_x == 0 || local_x == 7 || local_y == 0 || local_y == 7) begin
+                        colour <= 9'b000000000; // Black border
                     end else begin
+                        case (color_id)
+                            3'b000: colour <= 9'b111111111; // white
+                            3'b001: colour <= 9'b111111000; // yellow
+                            3'b010: colour <= 9'b000000111; // blue
+                            3'b011: colour <= 9'b000111000; // green
+                            3'b100: colour <= 9'b111000000; // red
+                            3'b101: colour <= 9'b111000111; // magenta
+                            default: colour <= 9'b000000000;
+                        endcase
+                    end
+                    
+                    if (pixel_counter >= CUBE_DRAW_END - 1) begin
+                        pixel_counter <= 0;
                         state <= IDLE;
-                        plot <= 1'b0;
+                    end else begin
+                        pixel_counter <= pixel_counter + 1;
                     end
                 end
                 
