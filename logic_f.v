@@ -11,36 +11,6 @@ SW [3:1] should be choosing the state, which KEY[1] should execute.
 101 should be move bottom
 110 should do nothing
 111 should do nothing
-
-*/
-/*
-Switch 0 should be reversing the operation
-KEY[0] is reset to start.
-SW [3:1] should be choosing the state, which KEY[1] should execute.
-
-000 should be move front
-001 should be move back
-010 should be move left
-011 should be move right
-100 should be move top
-101 should be move bottom
-110 should do nothing
-111 should do nothing
-
-*/
-/*
-Switch 0 should be reversing the operation
-KEY[0] is reset to start.
-SW [3:1] should be choosing the state, which KEY[1] should execute.
-
-000 should be move front
-001 should be move back
-010 should be move left
-011 should be move right
-100 should be move top
-101 should be move bottom
-110 should do nothing
-111 should do nothing
 */
 
 module logic_f(
@@ -663,3 +633,4 @@ always @(*) begin
 end
 
 endmodule
+
