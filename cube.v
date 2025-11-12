@@ -26,7 +26,7 @@ module cube(
     // Wires connecting drawer to VGA
     wire [7:0] x;
     wire [6:0] y;
-    wire [2:0] colour;
+    wire [8:0] colour;
     wire plot;
 
     // 1. Logic module - generates cube state based on user moves
@@ -74,6 +74,6 @@ module cube(
         .VGA_SYNC_N(VGA_SYNC_N),
         .VGA_CLK(VGA_CLK)
     );
-    defparam VGA.RESOLUTION = "160x120";
+	 defparam VGA.RESOLUTION = "160x120";
     
 endmodule
