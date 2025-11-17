@@ -1,22 +1,23 @@
 /*
 Switch 0 should be reversing the operation
 KEY[0] is reset to start.
-SW [3:1] should be choosing the state, which KEY[1] should execute.
+Keys U, D, F, B, L, R should be choosing the state and execute immediately.
 
-000 should be move front
-001 should be move back
-010 should be move left
-011 should be move right
-100 should be move top
-101 should be move bottom
-110 should do nothing
-111 should do nothing
+F should be move front
+B should be move back
+L should be move left
+R should be move right
+U should be move top
+D should be move bottom layer
 */
 
 module logic_f(
     input CLOCK_50,
-    input [3:0] SW,
-    input [1:0] KEY,
+    input wire [0:0] SW,
+    input [0:0] KEY,
+	 input wire [7:0] scancode,
+	 input wire ps2_rec,
+	 
     output reg [2:0] f1 [0:8],  // front
     output reg [2:0] f2 [0:8],  // back
     output reg [2:0] f3 [0:8],  // left
@@ -36,37 +37,18 @@ module logic_f(
 
     wire resetn = KEY[0];
     wire reverse = SW[0];
-    wire [2:0] move_sel = SW[3:1];
-
-    // Enhanced button debouncing
-    reg [19:0] debounce_counter;  // ~10ms at 50MHz
-    reg key1_stable;
-    reg key1_prev;
-    wire key1_pressed;
+    wire [2:0] move_sel;
+	 wire execute_move_k;
+	 wire reset = !KEY[0];
     
-    // Only trigger on stable low after debounce
-    assign key1_pressed = !key1_stable && key1_prev;
-    
-    // Debounce logic
-    always @(posedge CLOCK_50 or negedge resetn) begin
-        if (!resetn) begin
-            debounce_counter <= 0;
-            key1_stable <= 1'b1;
-            key1_prev <= 1'b1;
-        end else begin
-            key1_prev <= key1_stable;
-            
-            if (KEY[1] == key1_stable) begin
-                debounce_counter <= 0;
-            end else begin
-                debounce_counter <= debounce_counter + 1;
-                if (debounce_counter >= 500000) begin  // ~10ms
-                    key1_stable <= KEY[1];
-                    debounce_counter <= 0;
-                end
-            end
-        end
-    end
+	 ps2_control KEY_CONTROL (
+	     .CLOCK_50(CLOCK_50),
+		  .reset(reset),
+        .scancode(scancode), 
+        .ps2_rec(ps2_rec), 
+        .move_sel_out(move_sel),
+        .execute_move(execute_move_k)
+    );
 
     wire [2:0] front_out_front [0:8], front_out_back [0:8], front_out_left [0:8];
     wire [2:0] front_out_right [0:8], front_out_top [0:8], front_out_bottom [0:8];
@@ -151,7 +133,7 @@ module logic_f(
             end
             
             // Execute rotation on button press
-            if (key1_pressed) begin
+            if (execute_move_k) begin
                 case (move_sel)
                     3'b000: begin // front
                         for (i = 0; i < 9; i = i + 1) begin
@@ -633,4 +615,3 @@ always @(*) begin
 end
 
 endmodule
-
