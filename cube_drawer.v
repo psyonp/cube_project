@@ -1,7 +1,7 @@
 module cube_drawer(
     input clk,
     input resetn,
-    input redraw,  // Signal from logic module when cube state changes
+    input redraw,
     input [2:0] f1 [0:8],
     input [2:0] f2 [0:8],
     input [2:0] f3 [0:8],
