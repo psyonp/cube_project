@@ -1,7 +1,9 @@
 module cube(
     input CLOCK_50,
-    input [3:0] SW,
-    input [1:0] KEY,
+	 inout PS2_CLK,
+	 inout PS2_DAT,
+    input [0:0] SW,
+    input [0:0] KEY,
     output [9:0] VGA_R,
     output [9:0] VGA_G,
     output [9:0] VGA_B,
@@ -13,39 +15,63 @@ module cube(
 );
     // Reset signal
     wire resetn = KEY[0];
-    // Wires for the 6 cube faces
+	 wire reset = !resetn;
     wire [2:0] f1 [0:8];   // front
     wire [2:0] f2 [0:8];   // back
     wire [2:0] f3 [0:8];   // left
     wire [2:0] f4 [0:8];   // right
     wire [2:0] f5 [0:8];   // top
     wire [2:0] f6 [0:8];   // bottom
+	 
+	 wire [7:0] received_data;
+	 wire received_data_en;
+	 wire command_was_sent;
+	 wire error_communication_timed_out;
+	 
     // Wires connecting drawer to VGA
     wire [7:0] x;
     wire [6:0] y;
     wire [8:0] colour;
     wire plot;
-    wire redraw;  // ADD THIS: redraw signal
+    wire redraw;
+	 
+	 PS2_Controller PS2_KEYBOARD (
+        // Inputs
+        .CLOCK_50(CLOCK_50),
+        .reset(reset),
+        .the_command(8'h00),
+        .send_command(1'b0),
+        
+        .PS2_CLK(PS2_CLK),
+        .PS2_DAT(PS2_DAT),
+        
+        .command_was_sent(command_was_sent),
+        .error_communication_timed_out(error_communication_timed_out),
+        .received_data(received_data),
+        .received_data_en(received_data_en)
+    );
     
     // 1. Logic module - generates cube state based on user moves
     logic_f logic_unit(
         .CLOCK_50(CLOCK_50),  // ADD THIS: clock input
-        .SW(SW),
-        .KEY(KEY),
+        .SW(SW[0]),
+        .KEY(KEY[0]),
+		  .scancode(received_data),
+        .ps2_rec(received_data_en),
         .f1(f1),
         .f2(f2),
         .f3(f3),
         .f4(f4),
         .f5(f5),
         .f6(f6),
-        .redraw(redraw)  // ADD THIS: redraw output
+        .redraw(redraw)
     );
     
     // 2. Cube drawer - translates cube state into pixel signals
     cube_drawer drawer(
         .clk(CLOCK_50),
         .resetn(resetn),
-        .redraw(redraw),  // ADD THIS: redraw input
+        .redraw(redraw),
         .f1(f1),
         .f2(f2),
         .f3(f3),
